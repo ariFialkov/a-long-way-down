@@ -27,7 +27,7 @@ function cliffWall(b, yTop, seed, top) {
     return new THREE.Vector3(x, y, cliffZ(x, y, seed));
   };
   const colorAt = (x, y, k) => {
-    if (top && y > -1.1) return PAL.grass[k % 3];
+    if (top && y > -1.1) return PAL.grass[mod(k, 3)];
     const band = Math.floor((y + noise2(x * 0.05, y * 0.05, seed + 11) * 7) / 3.1);
     const n = PAL.strata.length;
     return PAL.strata[mod(Math.floor(hash2(band, 3, seed) * n) + (hash2(k, band, seed) < 0.16 ? 1 : 0), n)];
@@ -180,7 +180,7 @@ function buildingWall(b, S, runSeed) {
   facade(b, S, -14.8, 14.8, 0, cMid, rng, true);
   facade(b, S, -W, -14.8, -2.2, cL, rng, true);
   facade(b, S, 14.8, W, -1.3, cR, rng, true);
-  for (const s of [-1, 1]) b.box(0.4, H, 3, cMid, s * 14.6, yTop - H / 2, -1.5);
+  for (const s of [-1, 1]) b.box(0.4, H, 2.8, cMid, s * 14.6, yTop - H / 2, -1.8);
   for (const x of pipes) { b.cyl(0.1, H, PAL.metal, x, yTop - H / 2, 0.14); for (let j = 0; j < ROWS; j++) b.box(0.3, 0.1, 0.24, PAL.metalDark, x, yTop - j * RP - 1.2, 0.12); }
   // ivy creeping over a stretch of wall
   for (let i = 0; i < 3; i++) { const x = rng.range(-W + 3, W - 3), y = rng.range(yTop - H + 3, yTop - 3), zf = x < -14.8 ? -2.2 : x > 14.8 ? -1.3 : 0; for (let k = 0; k < 14; k++) b.sph(rng.range(0.25, 0.5), rng.pick(PAL.moss), x + rng.range(-1.2, 1.2), y + rng.range(-2, 2), zf + 0.03, 1, 1, 0.25); }
@@ -214,7 +214,7 @@ function floorSlab(b, type, x0, x1, y, rng) {
     for (let x = x0 + 2; x < x1 - 2; x += rng.range(5, 9)) if (Math.abs(x) > 8) { b.box(0.7, 1.2, 0.7, 0xd98a6a, x, y + 0.6, 0.7); b.box(0.9, 0.16, 0.9, 0xffffff, x, y + 1.25, 0.7); }
   } else {
     b.box(len, 0.5, 3.4, PAL.street, xc, y - 0.25, 1.7);
-    b.box(len, 0.2, 0.3, 0xe9ecf2, xc, y - 0.1, 3.3);
+    b.box(len, 0.24, 0.3, 0xe9ecf2, xc, y - 0.09, 3.32);
     b.box(len, 0.5, 3.5, 0x8a6a4f, xc, y - 0.75, 1.7); b.box(len, 0.14, 3.6, PAL.grass[1], xc, y - 0.5, 1.75);
     railing(b, x0 + 0.08, x1 - 0.08, y, 3.1, 0.8, 0x3d6b4f);
     for (let x = x0 + 2; x < x1 - 2; x += rng.range(5, 9)) if (Math.abs(x) > 8) {
@@ -247,10 +247,10 @@ function buildTop(b, group, biome, rng) {
 
   if (biome === 'cliff') {
     b.box(W * 2, 1.0, 71, PAL.grass[0], 0, -0.5, -34.9);
-    for (let i = 0; i < 40; i++) b.box(rng.range(2, 6), 0.05, rng.range(1.5, 5), PAL.grass[rng.int(1, 2)], rng.range(-W, W), 0.02, rng.range(-30, -1.5));
+    for (let i = 0; i < 40; i++) b.box(rng.range(2, 6), 0.05, rng.range(1.5, 5), PAL.grass[rng.int(1, 2)], rng.range(-W, W), 0.0 + i * 0.0015, rng.range(-30, -1.5)); // staggered heights: no two patches share a plane
     // the outcrop the faller stands on
-    b.rock(1.35, PAL.rock[1], 0, -0.62, 1.2, 2, 0.95, 0.42, 1.35);
-    b.box(2.4, 0.5, 2.9, PAL.rock[0], 0, -0.3, 1.2); b.box(2.46, 0.12, 2.95, PAL.grass[2], 0, -0.06, 1.2);
+    b.rock(1.35, PAL.rock[1], 0, -0.98, 1.2, 2, 0.95, 0.42, 1.35); // kept well below the turf so it can't poke through
+    b.box(2.4, 0.5, 2.9, PAL.rock[0], 0, -0.3, 1.35); b.box(2.46, 0.14, 2.95, PAL.grass[2], 0, -0.045, 1.36); // turf tops out 2.5cm above the plateau so the two never share a plane
     b.rock(0.5, PAL.rockDark, -0.8, -0.8, 1.8, 5); b.rock(0.4, PAL.rock[2], 0.9, -0.7, 0.9, 1);
     for (let i = 0; i < 26; i++) { const x = rng.range(-W, W), z = rng.range(-34, -3); if (Math.abs(x) < 4 && z > -9) continue; pine(b, x, 0, z, rng.range(1.3, 2.8), rng); }
     for (let i = 0; i < 14; i++) b.rock(rng.range(0.4, 1.3), rng.pick(PAL.rock), rng.range(-W, W), 0.2, rng.range(-20, -1), rng.int(0, 7), 1, 0.8, 1);
@@ -260,13 +260,13 @@ function buildTop(b, group, biome, rng) {
     for (let i = 0; i < 7; i++) { const x = -150 + i * 50 + rng.range(-12, 12), r = rng.range(34, 60); b.sph(r, [0x8fd9a0, 0x7fcfa6, 0xa3e2b0][i % 3], x, -r * 0.45, rng.range(-150, -95), 1.4, 0.75, 0.7); }
     for (let i = 0; i < 6; i++) { const x = -160 + i * 62 + rng.range(-15, 15), h = rng.range(55, 90), z = rng.range(-240, -200); b.cone(h * 0.6, h, 0xa9bfe6, x, h / 2 - 22, z); b.cone(h * 0.2, h * 0.34, 0xffffff, x, h * 0.84 - 22, z); }
   } else {
-    b.box(29.6, 0.5, 30, 0xcfd3e6, 0, -0.25, -15.2);
+    b.box(29.6, 0.5, 29.8, 0xcfd3e6, 0, -0.25, -15.3);
     for (const [x0, x1] of [[-14.8, -1.35], [1.35, 14.8]]) { b.box(x1 - x0, 0.55, 0.35, 0xffffff, (x0 + x1) / 2, 0.27, -0.2); b.box(x1 - x0, 0.1, 0.45, 0xe1ddea, (x0 + x1) / 2, 0.58, -0.2); }
     for (const s of [-1, 1]) b.box(0.35, 0.55, 30, 0xffffff, s * 14.6, 0.27, -15.2);
     // diving board
-    b.box(2.4, 0.14, 4.4, PAL.wood[2], 0, -0.07, 0.4); b.box(2.5, 0.2, 0.3, PAL.metalDark, 0, -0.24, -0.3);
+    b.box(2.4, 0.14, 4.4, PAL.wood[2], 0, -0.045, 0.4); b.box(2.5, 0.2, 0.3, PAL.metalDark, 0, -0.24, -0.3);
     for (const s of [-1, 1]) b.box(0.12, 0.12, 2.9, PAL.metalDark, s * 0.9, -0.55, 1.0, -0.33);
-    for (let i = 0; i < 6; i++) b.box(0.4, 0.15, 0.3, i % 2 ? 0x23263a : 0xffd23f, -1.0 + i * 0.4, -0.068, 2.45);
+    for (let i = 0; i < 6; i++) b.box(0.405, 0.16, 0.3, i % 2 ? 0x23263a : 0xffd23f, (-1.0 + i * 0.4) * 1.0125, -0.045, 2.47);
     // neighbouring roofs, a little taller
     for (const [x0, x1, zf, h, c] of [[-W, -14.8, -2.2, 4.2, 0xe6c9b8], [14.8, W, -1.3, 2.4, 0xc9d6ee]]) {
       b.box(x1 - x0, h, 0.4, c, (x0 + x1) / 2, h / 2, zf - 0.2); b.box(x1 - x0, 0.3, 30, 0xcfd3e6, (x0 + x1) / 2, h - 0.15, zf - 15.4);
