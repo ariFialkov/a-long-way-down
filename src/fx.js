@@ -3,7 +3,8 @@ import * as THREE from 'three';
 import { sharedMaterial } from './world/batch.js';
 import { CFG } from './config.js';
 
-const MAXB = 900, MAXP = 260;
+const MAXB = 900, MAXP = 260, MAXS = 160;
+export const BLOOD = [0xd90429, 0xb00020, 0xff2e4d, 0x9d0208];
 const _m = new THREE.Matrix4(), _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _s = new THREE.Vector3();
 const _e = new THREE.Euler(), _c = new THREE.Color(), _v = new THREE.Vector3();
 const rr = (a, b) => a + Math.random() * (b - a);
@@ -17,7 +18,11 @@ export class FX {
     this.boxMesh.castShadow = true;
     const pm = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.9, depthWrite: false });
     this.puffMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), pm, MAXP);
-    for (const m of [this.boxMesh, this.puffMesh]) {
+    // blood stains: persistent blobs that stay where they landed until the round is cleared
+    this.stains = [];
+    this.stainMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 6), new THREE.MeshToonMaterial({ gradientMap: sharedMaterial().gradientMap }), MAXS);
+    this.stainMesh.receiveShadow = true;
+    for (const m of [this.boxMesh, this.puffMesh, this.stainMesh]) {
       m.frustumCulled = false; m.count = 0;
       m.setColorAt(0, _c.set(0xffffff));
       scene.add(m);
@@ -54,6 +59,15 @@ export class FX {
         s: size * rr(0.6, 1.3), color, life: life * rr(0.7, 1.3), age: 0,
       });
     }
+  }
+  // A splash of blood: droplets that arc away from the impact. k = 0..1 severity.
+  blood(x, y, k = 0.5, vx = 0, vy = 0) {
+    this.burst({ x, y, n: Math.round(6 + k * 16), colors: BLOOD, speed: 4 + k * 6, up: 2.5, size: [0.05, 0.11 + k * 0.05], life: 0.9, g: 1.1, drag: 0.8, spread: 0.15, vx: vx * 0.25, vy: Math.max(-4, vy * 0.15) });
+  }
+  // A stain left behind on whatever was hit. flat => a pool on a horizontal surface.
+  stain(x, y, z, r, flat = false) {
+    if (this.stains.length >= MAXS) this.stains.shift();
+    this.stains.push({ x, y, z, sx: r * (flat ? rr(1.3, 2) : rr(0.8, 1.2)), sy: flat ? 0.035 : r * rr(0.8, 1.2), sz: flat ? r * rr(1, 1.6) : r * 0.5, color: BLOOD[(Math.random() * 2) | 0], age: 0, grow: flat ? 1.2 : 0.12 });
   }
   // A whole mesh sent flying (goats, gnomes, sugar bags...). opts.update(mesh, age) for custom motion.
   flyer(mesh, o) {
@@ -110,6 +124,19 @@ export class FX {
     this.puffMesh.instanceMatrix.needsUpdate = true;
     if (this.puffMesh.instanceColor) this.puffMesh.instanceColor.needsUpdate = true;
 
+    n = 0;
+    for (const st of this.stains) {
+      st.age += dt;
+      const u = Math.min(1, st.age / st.grow), k = 1 - (1 - u) ** 3;
+      _m.compose(_p.set(st.x, st.y, st.z), _q.identity(), _s.set(st.sx * k, st.sy * (st.grow > 1 ? 1 : k), st.sz * k));
+      this.stainMesh.setMatrixAt(n, _m);
+      this.stainMesh.setColorAt(n, _c.setHex(st.color));
+      n++;
+    }
+    this.stainMesh.count = n;
+    this.stainMesh.instanceMatrix.needsUpdate = true;
+    if (this.stainMesh.instanceColor) this.stainMesh.instanceColor.needsUpdate = true;
+
     for (let i = this.flyers.length - 1; i >= 0; i--) {
       const f = this.flyers[i], m = f.mesh;
       f.age += dt;
@@ -130,7 +157,7 @@ export class FX {
     }
   }
   clear() {
-    this.boxes.length = 0; this.puffs.length = 0;
+    this.boxes.length = 0; this.puffs.length = 0; this.stains.length = 0;
     for (const f of this.flyers) f.mesh.removeFromParent();
     this.flyers.length = 0;
     for (const p of this.pops) p.el.remove();

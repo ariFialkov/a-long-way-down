@@ -89,7 +89,7 @@ function newMenu() {
   G.world = new World(scene, { plan: null, biome: G.biome, decorSeed: G.decorSeed, fx, sfx });
   G.plan = null; G.cur = 0; G.t = 0; G.units = 0;
   G.pos = { x: 0, y: CFG.START_Y, vx: 0, vy: 0 };
-  doll.face('calm');
+  doll.face('calm'); doll.heal();
   if (G.balance < BETS[0]) { G.balance = 1000; toast('Out of credits - here are 1,000 more'); }
   while (G.betIdx > 0 && bet() > G.balance) G.betIdx--;
   save(); refreshHud(); setWin(0);
@@ -136,9 +136,15 @@ function onEvent(ev) {
       sfx.thud(0.4 + k * 0.4); sfx.grunt(k);
       G.shake = Math.max(G.shake, 0.12 + k * 0.2);
       fx.puff({ x: ev.x - ev.nx * 0.4, y: ev.y - ev.ny * 0.4, n: 3, color: 0xffffff, size: 0.22, life: 0.35 });
+      // gore: spray, a stain where he connected, and another bruise for the collection
+      const cx = ev.x - ev.nx * 0.42, cy = ev.y - ev.ny * 0.42, flat = ev.obj.mode === 'plat';
+      fx.blood(cx, cy, k, ev.vx, ev.vy);
+      if (flat || k > 0.35) fx.stain(cx, flat ? ev.y - 0.44 : cy, Z0 + (flat ? 0 : 0.15), 0.1 + k * 0.14, flat);
+      doll.hurt(k);
     } else {
       doll.kick((Math.random() - 0.5) * 10, 6);
       if (Math.random() < 0.6) sfx.yelp();
+      fx.blood(ev.x, ev.y, k * 0.5, ev.vx, ev.vy); doll.hurt(k * 0.4);
       G.shake = Math.max(G.shake, 0.2);
     }
     scorePop(ev);
@@ -155,13 +161,17 @@ function onEvent(ev) {
     doll.kick((Math.random() - 0.5) * 8, 8); doll.jolt(0, 5, 0.8); doll.face('dizzy');
     sfx.land();
     G.shake = 0.6;
+    fx.blood(ev.x, ev.y - 0.3, 1, ev.vx, 0); doll.hurt(1);
+    for (let i = 0; i < 3; i++) fx.stain(ev.x + (Math.random() - 0.5) * 0.9, ev.y - 0.44, Z0 + (Math.random() - 0.5) * 0.8, 0.22 + Math.random() * 0.2, true);
     fx.puff({ x: ev.x, y: ev.y - 0.35, n: 12, color: 0xffffff, size: 0.45, speed: 5, rise: 0.4 });
     fx.burst({ x: ev.x, y: ev.y - 0.3, n: 10, colors: [0xffffff, 0xffe9a8], speed: 6, size: [0.05, 0.12], life: 0.6 });
   } else if (ev.type === 'land2') {
     sfx.thud(0.35); G.shake = Math.max(G.shake, 0.15);
+    fx.blood(ev.x, ev.y - 0.3, 0.3); fx.stain(ev.x, ev.y - 0.44, Z0, 0.2, true);
     fx.puff({ x: ev.x, y: ev.y - 0.35, n: 4, color: 0xffffff, size: 0.3 });
   } else if (ev.type === 'stop') {
     setState('settle'); G.timer = 0;
+    fx.stain(ev.x, ev.y - 0.24, Z0 + 0.1, 0.5, true); // the pool he comes to rest in
   }
 }
 

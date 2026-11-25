@@ -28,7 +28,7 @@ const LIM = [
 const SUIT = 0x2f6bff, SUIT2 = 0xffffff, SKIN = 0xffd2b0, HELMET = 0xffc93c, SHOE = 0xff4757;
 
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _c = new THREE.Vector3(), _d = new THREE.Vector3();
-const _m = new THREE.Matrix4(), _up = new THREE.Vector3(0, 1, 0);
+const _m = new THREE.Matrix4(), _up = new THREE.Vector3(0, 1, 0), _col = new THREE.Color(), HALF = Math.PI / 2;
 
 export class Ragdoll {
   constructor(scene) {
@@ -53,7 +53,7 @@ export class Ragdoll {
     const add = (geo, mat) => { const m = new THREE.Mesh(geo, mat); m.castShadow = true; this.group.add(m); return m; };
     const bone = (a, b, r, mat) => {
       const len = Math.hypot(POSE[a][0] - POSE[b][0], POSE[a][1] - POSE[b][1], POSE[a][2] - POSE[b][2]);
-      return { a: this.p[a], b: this.p[b], mesh: add(new THREE.CapsuleGeometry(r, len, 3, 8), mat) };
+      return { a: this.p[a], b: this.p[b], r, len, mesh: add(new THREE.CapsuleGeometry(r, len, 3, 8), mat) };
     };
     this.bones = [
       bone('shL', 'elL', 0.085, mats.suit), bone('elL', 'haL', 0.075, mats.suit),
@@ -78,6 +78,7 @@ export class Ragdoll {
     this.group.add(this.torso);
     // head
     this.head = new THREE.Group();
+    this.skinMat = mats.skin;
     const skull = new THREE.Mesh(new THREE.SphereGeometry(0.26, 14, 10), mats.skin);
     skull.castShadow = true;
     const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.285, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.52), mats.helmet);
@@ -98,6 +99,54 @@ export class Ragdoll {
     this.mouth.position.set(0, -0.14, 0.225); this.mouth.scale.set(1, 0.3, 0.4);
     this.head.add(this.mouth);
     this.group.add(this.head);
+    // injuries
+    this.damage = 0; this.marks = [];
+    this.markGeo = new THREE.SphereGeometry(1, 8, 6);
+    this.markMats = [0x7b3fa0, 0x5a2a82, 0xc9184a, 0xb00020].map((c) => new THREE.MeshToonMaterial({ color: c, gradientMap: sharedMaterial().gradientMap }));
+    this.shiner = new THREE.Mesh(this.markGeo, this.markMats[1]);
+    this.shiner.scale.set(0.095, 0.1, 0.03); this.shiner.position.set(-0.1, -0.03, 0.212); this.shiner.visible = false;
+    this.lump = new THREE.Mesh(this.markGeo, this.markMats[2]);
+    this.lump.scale.set(0.07, 0.06, 0.05); this.lump.position.set(0.13, -0.11, 0.2); this.lump.visible = false;
+    this.nose = new THREE.Mesh(this.markGeo, this.markMats[3]);
+    this.nose.scale.set(0.025, 0.07, 0.02); this.nose.position.set(0.02, -0.09, 0.25); this.nose.visible = false;
+    this.head.add(this.shiner, this.lump, this.nose);
+  }
+  // Take a knock: k = 0..1. Bruises and cuts accumulate over the fall; the face gets steadily worse.
+  hurt(k = 0.5) {
+    this.damage += 0.5 + k;
+    const n = k > 0.6 ? 2 : 1;
+    for (let i = 0; i < n && this.marks.length < 46; i++) {
+      const cut = Math.random() < 0.35, m = new THREE.Mesh(this.markGeo, this.markMats[(cut ? 2 : 0) + ((Math.random() * 2) | 0)]);
+      const a = Math.random() * Math.PI * 2, size = 0.045 + Math.random() * 0.05 + k * 0.03, pick = Math.random();
+      let parent;
+      if (pick < 0.22) { // face / head, below the helmet line
+        parent = this.head;
+        const el = -0.2 - Math.random() * 0.7, az = (Math.random() - 0.5) * 2.6;
+        m.position.set(Math.sin(az) * Math.cos(el) * 0.255, Math.sin(el) * 0.255, Math.cos(az) * Math.cos(el) * 0.255);
+        m.scale.set(size, size, size * 0.4); m.lookAt(0, 0, 0); m.scale.multiplyScalar(0.8);
+      } else if (pick < 0.5) { // torso
+        parent = this.torso;
+        m.position.set(Math.cos(a) * 0.27, (Math.random() - 0.5) * 0.5, Math.sin(a) * 0.185);
+        m.scale.set(size * 1.3, size * 1.3, size * 0.5); m.rotation.y = HALF - a;
+      } else { // a limb
+        const all = [...this.bones, { mesh: this.thighL, r: 0.105, len: 0.36 }, { mesh: this.thighR, r: 0.105, len: 0.36 }];
+        const bn = all[(Math.random() * all.length) | 0];
+        parent = bn.mesh;
+        m.position.set(Math.cos(a) * bn.r * 0.95, (Math.random() - 0.5) * bn.len, Math.sin(a) * bn.r * 0.95);
+        m.scale.set(size, size * 1.2, size * 0.5); m.rotation.y = HALF - a;
+      }
+      parent.add(m); this.marks.push(m);
+    }
+    if (this.damage > 2.5) this.shiner.visible = true;
+    if (this.damage > 4.5) this.nose.visible = true;
+    if (this.damage > 6.5) this.lump.visible = true;
+    this.skinMat.color.setHex(SKIN).lerp(_col.setHex(0xe58f86), Math.min(0.55, this.damage * 0.045));
+  }
+  heal() {
+    for (const m of this.marks) m.removeFromParent();
+    this.marks.length = 0; this.damage = 0;
+    this.shiner.visible = this.lump.visible = this.nose.visible = false;
+    this.skinMat.color.setHex(SKIN);
   }
 
   // Scripted standing pose on the edge (menu). crouch 0..1 = wind-up for the jump.
