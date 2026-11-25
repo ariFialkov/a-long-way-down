@@ -133,11 +133,12 @@ function onEvent(ev) {
       const spin = (ev.nx * ev.vy - ev.ny * ev.vx) * 0.55 + (Math.random() - 0.5) * 4;
       doll.kick(Math.max(-14, Math.min(14, spin)), 5);
       doll.jolt(ev.nx * 4, ev.ny * 4, 0.6);
-      sfx.thud(0.5 + k * 0.5);
+      sfx.thud(0.4 + k * 0.4); sfx.grunt(k);
       G.shake = Math.max(G.shake, 0.12 + k * 0.2);
       fx.puff({ x: ev.x - ev.nx * 0.4, y: ev.y - ev.ny * 0.4, n: 3, color: 0xffffff, size: 0.22, life: 0.35 });
     } else {
       doll.kick((Math.random() - 0.5) * 10, 6);
+      if (Math.random() < 0.6) sfx.yelp();
       G.shake = Math.max(G.shake, 0.2);
     }
     scorePop(ev);
@@ -152,12 +153,12 @@ function onEvent(ev) {
   } else if (ev.type === 'land') {
     G.world.hit(ev);
     doll.kick((Math.random() - 0.5) * 8, 8); doll.jolt(0, 5, 0.8); doll.face('dizzy');
-    sfx.land(); sfx.wind(0);
+    sfx.land();
     G.shake = 0.6;
     fx.puff({ x: ev.x, y: ev.y - 0.35, n: 12, color: 0xffffff, size: 0.45, speed: 5, rise: 0.4 });
     fx.burst({ x: ev.x, y: ev.y - 0.3, n: 10, colors: [0xffffff, 0xffe9a8], speed: 6, size: [0.05, 0.12], life: 0.6 });
   } else if (ev.type === 'land2') {
-    sfx.thud(0.4); G.shake = Math.max(G.shake, 0.15);
+    sfx.thud(0.35); G.shake = Math.max(G.shake, 0.15);
     fx.puff({ x: ev.x, y: ev.y - 0.35, n: 4, color: 0xffffff, size: 0.3 });
   } else if (ev.type === 'stop') {
     setState('settle'); G.timer = 0;
@@ -199,7 +200,6 @@ $('#betUp').addEventListener('click', () => stepBet(1));
 $('#mute').addEventListener('click', () => { sfx.unlock(); sfx.setMuted(!sfx.muted); $('#mute').innerHTML = muteIcon(sfx.muted); });
 $('#mute').innerHTML = muteIcon(sfx.muted);
 addEventListener('contextmenu', (e) => e.preventDefault());
-document.addEventListener('visibilitychange', () => { if (document.hidden) sfx.wind(0); });
 
 // ------------------------------------------------------------------ camera
 function fitDistance() {
@@ -281,10 +281,11 @@ function frame(now) {
       doll.step(p.x, p.y, G.world.solids(G.cur), G.state === 'play' && speed > 5 ? 0.55 : 0);
     }
     doll.sync();
-    if (G.state === 'play') sfx.wind(Math.hypot(G.pos.vx, G.pos.vy));
     if (G.state === 'settle') { G.timer += dt; if (G.timer > 0.9) showResult(); }
   }
   updateCamera(dt);
+  sfx.setScene(G.plan ? G.plan.biomes[G.cur] : G.biome);
+  sfx.ambient();
   G.world.update(dt, G.cur, cam.pos.y, G.state === 'menu' || G.state === 'crouch' ? 1e3 : cam.pos.z * Math.tan((camera.fov * Math.PI) / 360) + 4);
   fx.update(dt);
   renderer.render(scene, camera);
@@ -294,4 +295,4 @@ function frame(now) {
 newMenu();
 document.fonts?.ready.then(() => {});
 requestAnimationFrame(frame);
-if (import.meta.env.DEV) { window.G = G; window.R = renderer; console.log(`RTP ${(RTP * 100).toFixed(2)}%`); }
+if (import.meta.env.DEV) { window.G = G; window.R = renderer; window.SFX = sfx; console.log(`RTP ${(RTP * 100).toFixed(2)}%`); }

@@ -83,7 +83,7 @@ function rockLike(o, S, big) {
   const w = wobbler(mesh, 0.1);
   return {
     hit(ev) {
-      w.kick(side(ev) * (big ? 1.2 : 2));
+      w.kick(side(ev) * (big ? 1.2 : 2)); S.sfx.obj(big ? 'boulder' : 'rock');
       S.fx.puff({ x: ev.x, y: ev.y - 0.3, n: 5, color: 0xf3e3d0, size: 0.35 });
       S.fx.burst({ x: ev.x, y: ev.y - 0.3, n: big ? 12 : 7, colors: PAL.rock, speed: 5, size: [0.07, 0.2] });
     },
@@ -104,7 +104,7 @@ B.log = (o, S) => {
   });
   const w = wobbler(mesh, 0.16);
   return {
-    hit(ev) { w.kick(side(ev) * 2.5); S.fx.burst({ x: ev.x, y: ev.y, n: 9, colors: PAL.grass, flat: true, speed: 4, g: 0.35, drag: 2, size: [0.12, 0.2] }); S.fx.burst({ x: ev.x, y: ev.y - 0.3, n: 4, colors: PAL.wood, speed: 4 }); },
+    hit(ev) { S.sfx.obj('log'); w.kick(side(ev) * 2.5); S.fx.burst({ x: ev.x, y: ev.y, n: 9, colors: PAL.grass, flat: true, speed: 4, g: 0.35, drag: 2, size: [0.12, 0.2] }); S.fx.burst({ x: ev.x, y: ev.y - 0.3, n: 4, colors: PAL.wood, speed: 4 }); },
     update: (t, dt) => w.update(dt),
   };
 };
@@ -127,7 +127,7 @@ B.lamp = (o, S) => {
     hit(ev) {
       w.kick(side(ev) * 3); glow = 1; mat.color.setHex(0xffe45c);
       S.fx.burst({ x: o.x, y: o.y, n: 10, colors: [0xfff3a0, 0xffd23f, 0xffffff], speed: 8, size: [0.05, 0.1], life: 0.5, g: 0.3 });
-      S.sfx.ding();
+      S.sfx.obj('lamp');
     },
     update(t, dt) { w.update(dt); if (glow > 0) { glow = Math.max(0, glow - dt * 3); globe.scale.setScalar(1 + glow * 0.5); } },
   };
@@ -147,7 +147,7 @@ B.sign = (o, S) => {
   mesh.add(face);
   const w = wobbler(mesh, 0.3);
   return {
-    hit(ev) { w.kick(side(ev) * 3.5); S.fx.burst({ x: ev.x, y: ev.y, n: 8, colors: [0xffd23f, 0xffffff, 0xff6b6b], speed: 7, size: [0.05, 0.1], life: 0.5, g: 0.3 }); S.sfx.ding(); },
+    hit(ev) { w.kick(side(ev) * 3.5); S.fx.burst({ x: ev.x, y: ev.y, n: 8, colors: [0xffd23f, 0xffffff, 0xff6b6b], speed: 7, size: [0.05, 0.1], life: 0.5, g: 0.3 }); S.sfx.obj('sign'); },
     update: (t, dt) => w.update(dt),
   };
 };
@@ -162,7 +162,7 @@ B.dish = (o, S) => {
   });
   mesh.rotation.y = S.rng.range(-0.25, 0.25);
   const w = wobbler(mesh, 0.25);
-  return { hit(ev) { w.kick(side(ev) * 3); S.fx.burst({ x: ev.x, y: ev.y, n: 8, colors: [0xffffff, 0xd5dbe8, 0xffd23f], speed: 7, size: [0.05, 0.1], life: 0.5, g: 0.3 }); }, update: (t, dt) => w.update(dt) };
+  return { hit(ev) { S.sfx.obj('dish'); w.kick(side(ev) * 3); S.fx.burst({ x: ev.x, y: ev.y, n: 8, colors: [0xffffff, 0xd5dbe8, 0xffd23f], speed: 7, size: [0.05, 0.1], life: 0.5, g: 0.3 }); }, update: (t, dt) => w.update(dt) };
 };
 B.ac = (o, S) => {
   const mesh = dyn(S, o.x, o.y, 0, (b) => {
@@ -175,7 +175,7 @@ B.ac = (o, S) => {
     b.box(0.08, 0.08, 1.0, PAL.metalDark, -0.4, -0.5, 0.5); b.box(0.08, 0.08, 1.0, PAL.metalDark, 0.4, -0.5, 0.5);
   });
   const w = wobbler(mesh, 0.14);
-  return { hit(ev) { w.kick(side(ev) * 2.5); S.fx.puff({ x: ev.x, y: ev.y, n: 4, color: 0xffffff, size: 0.3 }); S.fx.burst({ x: ev.x, y: ev.y, n: 6, colors: [0xcfd6e2, 0x9aa3b5], speed: 5, size: [0.06, 0.12] }); }, update: (t, dt) => w.update(dt) };
+  return { hit(ev) { S.sfx.obj('ac'); w.kick(side(ev) * 2.5); S.fx.puff({ x: ev.x, y: ev.y, n: 4, color: 0xffffff, size: 0.3 }); S.fx.burst({ x: ev.x, y: ev.y, n: 6, colors: [0xcfd6e2, 0x9aa3b5], speed: 5, size: [0.06, 0.12] }); }, update: (t, dt) => w.update(dt) };
 };
 B.flagpole = (o, S) => {
   const c1 = S.rng.pick(PAL.cloth), c2 = S.rng.pick(PAL.cloth);
@@ -186,7 +186,7 @@ B.flagpole = (o, S) => {
     b.box(0.62, 0.3, 0.04, c1, 0, -0.26, 2.6); b.box(0.62, 0.3, 0.04, c2, 0, -0.56, 2.6);
   });
   const w = wobbler(mesh, 0.35);
-  return { hit(ev) { w.kick(side(ev) * 4); S.fx.burst({ x: ev.x, y: ev.y, n: 6, colors: [c1, c2, 0xffffff], speed: 6, flat: true, size: [0.08, 0.16], g: 0.4, drag: 2 }); }, update: (t, dt) => w.update(dt) };
+  return { hit(ev) { S.sfx.obj('flagpole'); w.kick(side(ev) * 4); S.fx.burst({ x: ev.x, y: ev.y, n: 6, colors: [c1, c2, 0xffffff], speed: 6, flat: true, size: [0.08, 0.16], g: 0.4, drag: 2 }); }, update: (t, dt) => w.update(dt) };
 };
 
 // ---------------------------------------------------------------- small platforms + things resting on them
@@ -194,12 +194,12 @@ function topper(o, S) {
   const { fx, sfx, rng } = S, y = o.y, kind = o.topper;
   if (kind === 'flowers') {
     const m = dyn(S, o.x, y, 0, (b) => { for (let i = 0; i < 12; i++) flower(b, rng.range(-o.hw * 0.75, o.hw * 0.75), 0, rng.range(0.7, 2.2), rng, 1.3); for (let i = 0; i < 5; i++) b.sph(0.16, rng.pick(PAL.grass), rng.range(-o.hw * 0.7, o.hw * 0.7), 0.06, rng.range(0.7, 2.2)); });
-    return { hit(ev) { m.visible = false; fx.burst({ x: ev.x, y: y + 0.3, n: 46, colors: PAL.flowers, flat: true, speed: 7, up: 4, size: [0.1, 0.2], g: 0.3, drag: 2.2, life: 1.8, spread: 0.8 }); fx.burst({ x: ev.x, y: y + 0.2, n: 12, colors: PAL.grass, speed: 5, size: [0.06, 0.12] }); sfx.rip(); } };
+    return { hit(ev) { m.visible = false; fx.burst({ x: ev.x, y: y + 0.3, n: 46, colors: PAL.flowers, flat: true, speed: 7, up: 4, size: [0.1, 0.2], g: 0.3, drag: 2.2, life: 1.8, spread: 0.8 }); fx.burst({ x: ev.x, y: y + 0.2, n: 12, colors: PAL.grass, speed: 5, size: [0.06, 0.12] }); sfx.obj('flowers'); } };
   }
   if (kind === 'pots') {
     const xs = [-0.55, 0, 0.55].map((x) => x * o.hw);
     const m = dyn(S, o.x, y, 0, (b) => { for (const x of xs) { const z = rng.range(1.2, 1.9); b.cyl(0.2, 0.3, 0xd9774a, x, 0.15, z, Math.PI); b.cyl(0.23, 0.06, 0xc0633a, x, 0.3, z); b.sph(0.22, rng.pick(PAL.grass), x, 0.48, z); flower(b, x + 0.08, 0.5, z + 0.1, rng, 1.2); flower(b, x - 0.1, 0.45, z, rng, 1.2); } });
-    return { hit(ev) { m.visible = false; fx.burst({ x: ev.x, y: y + 0.2, n: 22, colors: [0xd9774a, 0xc0633a, 0x7a4a2b], speed: 7, up: 3, size: [0.08, 0.2], spread: 0.7 }); fx.burst({ x: ev.x, y: y + 0.4, n: 18, colors: PAL.flowers.concat(PAL.grass), flat: true, speed: 6, up: 4, g: 0.35, drag: 2, size: [0.1, 0.18] }); fx.puff({ x: ev.x, y: y + 0.2, n: 4, color: 0xb98a5e, size: 0.3 }); sfx.smash(); } };
+    return { hit(ev) { m.visible = false; fx.burst({ x: ev.x, y: y + 0.2, n: 22, colors: [0xd9774a, 0xc0633a, 0x7a4a2b], speed: 7, up: 3, size: [0.08, 0.2], spread: 0.7 }); fx.burst({ x: ev.x, y: y + 0.4, n: 18, colors: PAL.flowers.concat(PAL.grass), flat: true, speed: 6, up: 4, g: 0.35, drag: 2, size: [0.1, 0.18] }); fx.puff({ x: ev.x, y: y + 0.2, n: 4, color: 0xb98a5e, size: 0.3 }); sfx.obj('pots'); } };
   }
   if (kind === 'hut') {
     const hx = -0.3 * o.hw, gx = 0.5 * o.hw;
@@ -218,7 +218,7 @@ function topper(o, S) {
         fx.burst({ x: o.x + hx, y: y + 0.8, n: 12, colors: [0xff4757, 0xffffff, 0xff6b81], speed: 8, up: 5, size: [0.1, 0.24] });
         fx.puff({ x: o.x + hx, y: y + 0.3, n: 6, color: 0xfff1d6, size: 0.4 });
         fx.flyer(gnome, { vx: side(ev) * 5 + 2, vy: 11, vz: 1.5, spin: 14 });
-        sfx.crash();
+        sfx.obj('hut');
       },
       update(t) { gnome.position.y = y + Math.max(0, Math.sin(t * 3 + o.x)) * 0.05; },
     };
@@ -228,7 +228,7 @@ function topper(o, S) {
     goat.scale.x = dir;
     let gone = false;
     return {
-      hit(ev) { gone = true; fx.flyer(goat, { vx: side(ev) * 7, vy: 10, vz: 2, spin: side(ev) * -11 }); fx.puff({ x: o.x, y: y + 0.4, n: 6, color: 0xffffff, size: 0.35 }); fx.burst({ x: o.x, y: y + 0.5, n: 10, colors: [0xffffff, 0xf2efe4], flat: true, speed: 5, g: 0.3, drag: 2, size: [0.08, 0.14] }); sfx.bleat(); },
+      hit(ev) { gone = true; fx.flyer(goat, { vx: side(ev) * 7, vy: 10, vz: 2, spin: side(ev) * -11 }); fx.puff({ x: o.x, y: y + 0.4, n: 6, color: 0xffffff, size: 0.35 }); fx.burst({ x: o.x, y: y + 0.5, n: 10, colors: [0xffffff, 0xf2efe4], flat: true, speed: 5, g: 0.3, drag: 2, size: [0.08, 0.14] }); sfx.obj('goat'); },
       update(t) { if (!gone) { goat.rotation.z = Math.sin(t * 1.7 + o.x) * 0.04; goat.position.y = y + Math.abs(Math.sin(t * 2.3 + o.y)) * 0.03; } },
     };
   }
@@ -240,7 +240,7 @@ function topper(o, S) {
         gone = true;
         birds.forEach((m, i) => fx.flyer(m, { vx: (i - 1) * 4 + side(ev) * 2, vy: 6 + i * 2, vz: 1, g: -0.25, spin: 0, life: 2.5, update: (mm, age) => { mm.rotation.set(0, 0, Math.sin(age * 40) * 0.5); mm.scale.y = 1 + Math.sin(age * 40) * 0.3; } }));
         fx.burst({ x: ev.x, y: y + 0.3, n: 16, colors: [0xffffff, 0x9aa4b8, 0xc9d0de], flat: true, speed: 5, up: 2, g: 0.15, drag: 2.5, life: 2, size: [0.1, 0.18] });
-        sfx.flutter();
+        sfx.obj('pigeons');
       },
       update(t) { if (!gone) birds.forEach((m, i) => { m.rotation.z = Math.max(0, Math.sin(t * 2 + i * 2.1 + o.x)) ** 6 * -0.5; }); },
     };
@@ -309,7 +309,7 @@ B.bridge = (o, S) => {
       for (const p of planks) { const d = p.x - ev.x; fx.chunk({ x: p.x, y: p.y, z: Z0, vx: d * 2.2 + (Math.random() - 0.5) * 3, vy: 5 - Math.abs(d) * 1.2 + Math.random() * 3, vz: (Math.random() - 0.3) * 3, sx: 0.34, sy: 0.08, sz: 1.2, color: p.c, life: 2.2, spin: 7 }); }
       fx.burst({ x: ev.x, y: ev.y, n: 14, colors: [0xe8d3a8, 0xcf9a63], speed: 6, size: [0.05, 0.3], flat: true });
       fx.puff({ x: ev.x, y: ev.y, n: 5, color: 0xf3e3d0, size: 0.4 });
-      sfx.crash();
+      sfx.obj('bridge');
     },
   };
 };
@@ -327,7 +327,7 @@ function lineOf(o, S, items, poleCol, dustCol) {
       m.visible = false;
       for (const f of flying) fx.chunk({ x: f.x, y: f.y, z: Z0, vx: (f.x - ev.x) * 1.5 + ev.vx * 0.3 + (Math.random() - 0.5) * 3, vy: 3 + Math.random() * 4, vz: Math.random() * 2, sx: f.w, sy: f.h, sz: 0.04, color: f.c, life: 2.6, g: 0.22, drag: 1.8, spin: 5 });
       fx.puff({ x: ev.x, y: ev.y, n: 3, color: dustCol, size: 0.3 });
-      sfx.rip();
+      sfx.obj(o.kind);
     },
   };
 }
@@ -360,7 +360,7 @@ B.awning = (o, S) => {
       m.visible = false;
       for (const s of strips) for (let k = 0; k < 3; k++) fx.chunk({ x: s.x, y: o.y + 0.3 - k * 0.3, z: 0.5 + k * 0.9, vx: (s.x - ev.x) * 2 + (Math.random() - 0.5) * 2, vy: -2 + Math.random() * 5, vz: Math.random() * 2, sx: w / n, sy: 0.04, sz: 0.85, color: s.c, life: 2.2, g: 0.3, drag: 1.6, spin: 5 });
       fx.puff({ x: ev.x, y: ev.y, n: 4, color: 0xffffff, size: 0.35 });
-      sfx.rip(); sfx.thud(0.6);
+      sfx.obj('awning');
     },
   };
 };
@@ -383,7 +383,7 @@ B.sugar = (o, S) => {
       fx.puff({ x: ev.x, y: ev.y, n: 46, color: 0xffffff, size: 0.75, spread: 0.8, life: 1.5, speed: 6, rise: 0.6 });
       fx.burst({ x: ev.x, y: ev.y, n: 40, colors: [0xffffff, 0xf5f8ff], speed: 9, size: [0.04, 0.09], life: 1.4, g: 0.5, drag: 1.5 });
       fx.burst({ x: ev.x, y: ev.y, n: 6, colors: [0xfffdf5, 0x5a9bff], speed: 5, flat: true, size: [0.15, 0.3], g: 0.3, drag: 2 });
-      sfx.poof();
+      sfx.obj('sugar');
     },
     update(t, dt) {
       // the bag is lobbed back and forth so that it is exactly mid-arc when the faller arrives
@@ -419,7 +419,7 @@ B.bird = (o, S) => {
       dead = true; g.visible = false;
       fx.burst({ x: ev.x, y: ev.y, n: 30, colors: [col, 0xffffff], flat: true, speed: 7, up: 2, g: 0.15, drag: 2.5, life: 2.2, size: [0.1, 0.22] });
       fx.puff({ x: ev.x, y: ev.y, n: 4, color: 0xffffff, size: 0.3 });
-      sfx.squawk();
+      sfx.obj('bird');
     },
     update(t) {
       if (dead) return;

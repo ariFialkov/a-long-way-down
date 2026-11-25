@@ -3,7 +3,8 @@
 // Surfaces are functions of world coordinates / per-stretch seeds, so neighbouring chunks line up.
 import * as THREE from 'three';
 import { Batch, labelTexture } from './batch.js';
-import { figure, railing, flower, buildObject } from './objects.js';
+import { railing, flower, buildObject } from './objects.js';
+import { makeNpc } from './npc.js';
 import { CFG, PAL, KINDS } from '../config.js';
 import { RNG, hash2, noise2 } from '../rng.js';
 
@@ -107,47 +108,37 @@ function cliffDecor(b, S, seed) {
 
 // ------------------------------------------------------------------ buildings
 const ROWS = 6, RP = H / ROWS, COLP = 3.25, WW = 1.8, WH = 2.4;
-function npcAnim(mesh, kind, phase, x0, y0) {
-  return (t) => {
-    const u = t + phase;
-    if (kind === 0) { mesh.position.x = x0 + Math.sin(u * 0.8) * 0.45; mesh.scale.x = Math.cos(u * 0.8) > 0 ? 1 : -1; mesh.position.y = y0 + Math.abs(Math.sin(u * 6)) * 0.04; }
-    else if (kind === 1) { mesh.position.y = y0 + Math.abs(Math.sin(u * 5)) * 0.16; mesh.rotation.z = Math.sin(u * 5) * 0.16; }
-    else if (kind === 2) { mesh.rotation.z = Math.sin(u * 7) * 0.07; mesh.position.y = y0 + Math.sin(u * 1.5) * 0.02; }
-    else { mesh.position.y = y0 - Math.abs(Math.sin(u * 2.4)) * 0.4; }
-  };
-}
 function windowScene(b, S, x, y, zf, rng, live) {
   const trim = PAL.trim, zb = zf - 1.5, yb = y - WH / 2;
   // frame + sill
   b.box(WW + 0.3, 0.14, 0.16, trim, x, y + WH / 2 + 0.07, zf + 0.02); b.box(WW + 0.44, 0.16, 0.34, trim, x, yb - 0.08, zf + 0.1);
   b.box(0.14, WH, 0.16, trim, x - WW / 2 - 0.07, y, zf + 0.02); b.box(0.14, WH, 0.16, trim, x + WW / 2 + 0.07, y, zf + 0.02);
   const type = rng.weighted([['room', 0.38], ['blinds', 0.27], ['dark', 0.17], ['curtain', 0.18]]);
-  const addNpc = (flat, z, s) => {
-    const m = new Batch(); figure(m, 0, 0, 0, s, rng, flat);
-    const mesh = m.build({ shadow: false });
-    const px = x + rng.range(-0.3, 0.3), py = yb - 0.25;
-    mesh.position.set(px, py, z);
-    if (flat != null) mesh.scale.z = 0.04;
-    S.group.add(mesh);
-    S.anims.push(npcAnim(mesh, rng.int(0, 3), rng.range(0, 9), px, py));
+  const addNpc = (silhouette, z) => {
+    const n = makeNpc(rng, x, yb + 0.1, z, { silhouette, s: silhouette ? 1.25 : 1.2 });
+    S.group.add(n.group);
+    S.anims.push(n.update);
   };
   if (type === 'room') {
     const wall = rng.pick(PAL.room);
     b.box(WW, WH, 0.1, wall, x, y, zb); b.box(WW, 0.1, 1.2, 0xc49a6c, x, yb + 0.05, zf - 0.9);
     b.box(WW, 0.5, 0.1, 0xffffff, x, yb + 0.25, zb + 0.06);
-    const f = rng.int(0, 3);
-    if (f === 0) { b.box(0.6, 0.5, 0.06, 0xffffff, x - 0.4, y + 0.5, zb + 0.08); b.box(0.48, 0.38, 0.07, rng.pick(PAL.cloth), x - 0.4, y + 0.5, zb + 0.1); }
-    else if (f === 1) { b.cyl(0.04, 1.3, 0x6b7280, x + 0.55, yb + 0.65, zb + 0.4); b.cone(0.26, 0.3, 0xffe066, x + 0.55, yb + 1.4, zb + 0.4); }
-    else if (f === 2) { b.cyl(0.16, 0.3, 0xd9774a, x - 0.55, yb + 0.2, zb + 0.4, Math.PI); b.sph(0.3, PAL.grass[1], x - 0.55, yb + 0.65, zb + 0.4, 1, 1.3, 1); }
-    else { b.box(1.1, 0.08, 0.3, 0xa26c3f, x, y + 0.6, zb + 0.2); for (let i = 0; i < 4; i++) b.box(0.12, 0.3, 0.2, rng.pick(PAL.cloth), x - 0.4 + i * 0.22, y + 0.8, zb + 0.2); }
-    if (rng.chance(0.3)) { b.box(0.9, 0.55, 0.08, 0x23263a, x + 0.2, yb + 0.9, zb + 0.3); b.box(0.8, 0.45, 0.09, rng.pick([0x7fd3ff, 0xffa3c4, 0xb8ffb0]), x + 0.2, yb + 0.9, zb + 0.31); }
-    if (live && rng.chance(0.6)) addNpc(null, zf - 0.8, 1.25);
+    // a busy neighbour gets the room to themselves; empty rooms get furniture instead
+    if (live && rng.chance(0.62)) addNpc(false, zf - 0.85);
+    else {
+      const f = rng.int(0, 3);
+      if (f === 0) { b.box(0.6, 0.5, 0.06, 0xffffff, x - 0.4, y + 0.5, zb + 0.08); b.box(0.48, 0.38, 0.07, rng.pick(PAL.cloth), x - 0.4, y + 0.5, zb + 0.1); }
+      else if (f === 1) { b.cyl(0.04, 1.3, 0x6b7280, x + 0.55, yb + 0.65, zb + 0.4); b.cone(0.26, 0.3, 0xffe066, x + 0.55, yb + 1.4, zb + 0.4); }
+      else if (f === 2) { b.cyl(0.16, 0.3, 0xd9774a, x - 0.55, yb + 0.2, zb + 0.4, Math.PI); b.sph(0.3, PAL.grass[1], x - 0.55, yb + 0.65, zb + 0.4, 1, 1.3, 1); }
+      else { b.box(1.1, 0.08, 0.3, 0xa26c3f, x, y + 0.6, zb + 0.2); for (let i = 0; i < 4; i++) b.box(0.12, 0.3, 0.2, rng.pick(PAL.cloth), x - 0.4 + i * 0.22, y + 0.8, zb + 0.2); }
+      if (rng.chance(0.3)) { b.box(0.9, 0.55, 0.08, 0x23263a, x + 0.2, yb + 0.9, zb + 0.3); b.box(0.8, 0.45, 0.09, rng.pick([0x7fd3ff, 0xffa3c4, 0xb8ffb0]), x + 0.2, yb + 0.9, zb + 0.31); }
+    }
     const cur = rng.pick(PAL.cloth);
     b.box(0.22, WH, 0.08, cur, x - WW / 2 + 0.11, y, zf - 0.3); b.box(0.22, WH, 0.08, cur, x + WW / 2 - 0.11, y, zf - 0.3);
   } else if (type === 'blinds') {
     b.box(WW, WH, 0.06, 0xfff6e0, x, y, zf - 0.3);
     for (let i = 0; i < 8; i++) b.box(WW, 0.04, 0.07, 0xe6d6b0, x, yb + 0.15 + i * 0.3, zf - 0.29);
-    if (live && rng.chance(0.55)) addNpc(0x8a7d68, zf - 0.24, 1.25);
+    if (live && rng.chance(0.55)) addNpc(true, zf - 0.24);
   } else if (type === 'dark') {
     b.box(WW, WH, 0.06, 0x4f7bb8, x, y, zf - 0.3);
     b.box(0.3, WH * 1.1, 0.07, 0x86b1e6, x - 0.3, y, zf - 0.29, 0, 0, -0.45); b.box(0.12, WH * 1.1, 0.07, 0x86b1e6, x + 0.2, y, zf - 0.29, 0, 0, -0.45);
