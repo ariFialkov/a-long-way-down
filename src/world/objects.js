@@ -81,7 +81,7 @@ function rockLike(o, S, big) {
     if (big) b.rock(r * 0.4, col, -r * 0.5, r * 0.55, 1.2, v + 5);
   });
   const w = wobbler(mesh, 0.1);
-  return {
+  return { mesh,
     hit(ev) {
       w.kick(side(ev) * (big ? 1.2 : 2)); S.sfx.obj(big ? 'boulder' : 'rock');
       S.fx.puff({ x: ev.x, y: ev.y - 0.3, n: 5, color: 0xf3e3d0, size: 0.35 });
@@ -103,7 +103,7 @@ B.log = (o, S) => {
     b.sph(0.3, S.rng.pick(PAL.moss), 0, r * 0.75, 0.8, 1, 0.4, 2);
   });
   const w = wobbler(mesh, 0.16);
-  return {
+  return { mesh,
     hit(ev) { S.sfx.obj('log'); w.kick(side(ev) * 2.5); S.fx.burst({ x: ev.x, y: ev.y, n: 9, colors: PAL.grass, flat: true, speed: 4, g: 0.35, drag: 2, size: [0.12, 0.2] }); S.fx.burst({ x: ev.x, y: ev.y - 0.3, n: 4, colors: PAL.wood, speed: 4 }); },
     update: (t, dt) => w.update(dt),
   };
@@ -123,7 +123,7 @@ B.lamp = (o, S) => {
   mesh.add(globe);
   const w = wobbler(mesh, 0.2);
   let glow = 0;
-  return {
+  return { mesh,
     hit(ev) {
       w.kick(side(ev) * 3); glow = 1; mat.color.setHex(0xffe45c);
       S.fx.burst({ x: o.x, y: o.y, n: 10, colors: [0xfff3a0, 0xffd23f, 0xffffff], speed: 8, size: [0.05, 0.1], life: 0.5, g: 0.3 });
@@ -146,7 +146,7 @@ B.sign = (o, S) => {
   face.position.set(0, 0, Z0 + 0.125);
   mesh.add(face);
   const w = wobbler(mesh, 0.3);
-  return {
+  return { mesh,
     hit(ev) { w.kick(side(ev) * 3.5); S.fx.burst({ x: ev.x, y: ev.y, n: 8, colors: [0xffd23f, 0xffffff, 0xff6b6b], speed: 7, size: [0.05, 0.1], life: 0.5, g: 0.3 }); S.sfx.obj('sign'); },
     update: (t, dt) => w.update(dt),
   };
@@ -162,7 +162,7 @@ B.dish = (o, S) => {
   });
   mesh.rotation.y = S.rng.range(-0.25, 0.25);
   const w = wobbler(mesh, 0.25);
-  return { hit(ev) { S.sfx.obj('dish'); w.kick(side(ev) * 3); S.fx.burst({ x: ev.x, y: ev.y, n: 8, colors: [0xffffff, 0xd5dbe8, 0xffd23f], speed: 7, size: [0.05, 0.1], life: 0.5, g: 0.3 }); }, update: (t, dt) => w.update(dt) };
+  return { mesh, hit(ev) { S.sfx.obj('dish'); w.kick(side(ev) * 3); S.fx.burst({ x: ev.x, y: ev.y, n: 8, colors: [0xffffff, 0xd5dbe8, 0xffd23f], speed: 7, size: [0.05, 0.1], life: 0.5, g: 0.3 }); }, update: (t, dt) => w.update(dt) };
 };
 B.ac = (o, S) => {
   const mesh = dyn(S, o.x, o.y, 0, (b) => {
@@ -175,7 +175,7 @@ B.ac = (o, S) => {
     b.box(0.08, 0.08, 1.0, PAL.metalDark, -0.4, -0.5, 0.5); b.box(0.08, 0.08, 1.0, PAL.metalDark, 0.4, -0.5, 0.5);
   });
   const w = wobbler(mesh, 0.14);
-  return { hit(ev) { S.sfx.obj('ac'); w.kick(side(ev) * 2.5); S.fx.puff({ x: ev.x, y: ev.y, n: 4, color: 0xffffff, size: 0.3 }); S.fx.burst({ x: ev.x, y: ev.y, n: 6, colors: [0xcfd6e2, 0x9aa3b5], speed: 5, size: [0.06, 0.12] }); }, update: (t, dt) => w.update(dt) };
+  return { mesh, hit(ev) { S.sfx.obj('ac'); w.kick(side(ev) * 2.5); S.fx.puff({ x: ev.x, y: ev.y, n: 4, color: 0xffffff, size: 0.3 }); S.fx.burst({ x: ev.x, y: ev.y, n: 6, colors: [0xcfd6e2, 0x9aa3b5], speed: 5, size: [0.06, 0.12] }); }, update: (t, dt) => w.update(dt) };
 };
 B.flagpole = (o, S) => {
   const c1 = S.rng.pick(PAL.cloth), c2 = S.rng.pick(PAL.cloth);
@@ -186,7 +186,7 @@ B.flagpole = (o, S) => {
     b.box(0.62, 0.3, 0.04, c1, 0, -0.26, 2.6); b.box(0.62, 0.3, 0.04, c2, 0, -0.56, 2.6);
   });
   const w = wobbler(mesh, 0.35);
-  return { hit(ev) { S.sfx.obj('flagpole'); w.kick(side(ev) * 4); S.fx.burst({ x: ev.x, y: ev.y, n: 6, colors: [c1, c2, 0xffffff], speed: 6, flat: true, size: [0.08, 0.16], g: 0.4, drag: 2 }); }, update: (t, dt) => w.update(dt) };
+  return { mesh, hit(ev) { S.sfx.obj('flagpole'); w.kick(side(ev) * 4); S.fx.burst({ x: ev.x, y: ev.y, n: 6, colors: [c1, c2, 0xffffff], speed: 6, flat: true, size: [0.08, 0.16], g: 0.4, drag: 2 }); }, update: (t, dt) => w.update(dt) };
 };
 
 // ---------------------------------------------------------------- small platforms + things resting on them

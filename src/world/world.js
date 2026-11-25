@@ -40,10 +40,12 @@ export class World {
     }
     return s;
   }
+  // returns the object's own mesh when it has one (so decals can be stuck to it)
   hit(ev) {
-    if (!ev.obj) return;
+    if (!ev.obj) return null;
     const c = this.chunks.get(ev.obj.sec), h = c && c.handles.get(ev.obj.id);
     if (h && h.hit) h.hit(ev);
+    return (h && h.mesh) || null;
   }
   // camY / viewH: what the camera can currently see, so chunks out of shot are skipped entirely
   update(dt, cur, camY = 0, viewH = 1e3) {

@@ -7,6 +7,7 @@ import { CFG, PAL } from './config.js';
 import { drawOutcome, RTP } from './outcome.js';
 import { planRound, evalPath } from './planner.js';
 import { World } from './world/world.js';
+import { splatOn } from './world/decal.js';
 import { Ragdoll } from './ragdoll.js';
 import { FX } from './fx.js';
 import { Sfx } from './audio.js';
@@ -127,7 +128,7 @@ function scorePop(ev, big) {
 function onEvent(ev) {
   const plan = G.plan;
   if (ev.type === 'hit' || ev.type === 'pass') {
-    G.world.hit(ev);
+    const mesh = G.world.hit(ev);
     const k = Math.min(1, ev.speed / 18);
     if (ev.type === 'hit') {
       const spin = (ev.nx * ev.vy - ev.ny * ev.vx) * 0.55 + (Math.random() - 0.5) * 4;
@@ -139,7 +140,8 @@ function onEvent(ev) {
       // gore: spray, a stain where he connected, and another bruise for the collection
       const cx = ev.x - ev.nx * 0.42, cy = ev.y - ev.ny * 0.42, flat = ev.obj.mode === 'plat';
       fx.blood(cx, cy, k, ev.vx, ev.vy);
-      if (flat || k > 0.35) fx.stain(cx, flat ? ev.y - 0.44 : cy, Z0 + (flat ? 0 : 0.15), 0.1 + k * 0.14, flat);
+      if (mesh) splatOn(mesh, cx, cy, Z0, ev.nx, ev.ny, 0.75 + k * 0.7); // wraps the object's surface
+      else if (flat) fx.stain(cx, ev.y - 0.44, Z0, 0.1 + k * 0.14, true);
       doll.hurt(k);
     } else {
       doll.kick((Math.random() - 0.5) * 10, 6);
@@ -305,4 +307,4 @@ function frame(now) {
 newMenu();
 document.fonts?.ready.then(() => {});
 requestAnimationFrame(frame);
-if (import.meta.env.DEV) { window.G = G; window.R = renderer; window.SFX = sfx; console.log(`RTP ${(RTP * 100).toFixed(2)}%`); }
+if (import.meta.env.DEV) { window.G = G; window.R = renderer; window.SFX = sfx; window.CAM = camera; console.log(`RTP ${(RTP * 100).toFixed(2)}%`); }
