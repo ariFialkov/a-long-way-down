@@ -192,7 +192,7 @@ function action() {
 
 // ------------------------------------------------------------------ input
 ui.addEventListener('pointerdown', (e) => { if (!e.target.closest('button')) action(); });
-addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); action(); } });
+addEventListener('keydown', (e) => { if ((e.code === 'Space' || e.code === 'Enter') && !e.repeat && !e.target.closest?.('button')) { e.preventDefault(); action(); } });
 const stepBet = (d) => { const n = G.betIdx + d; if (n < 0 || n >= BETS.length || BETS[n] > G.balance) return; G.betIdx = n; sfx.unlock(); sfx.tick(); save(); refreshHud(); };
 $('#betDown').addEventListener('click', () => stepBet(-1));
 $('#betUp').addEventListener('click', () => stepBet(1));

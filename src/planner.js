@@ -37,6 +37,7 @@ function overlaps(a, b, m) {
 // contact with this very object, during which touching it is the whole point.
 function blocked(samples, obj, clr, own) {
   for (const s of obj.shapes) {
+    if (own && s.smash) continue; // whatever rests on the platform is flattened on contact
     const c = own && s.core ? R * 0.9 : clr;
     for (const p of samples) {
       if (own && p.t > own.t - own.pre && p.t < own.t + own.post) continue;
@@ -55,7 +56,7 @@ function mkPeg(kind, cx, cy, rng) {
 function mkPlat(kind, cx, top, hw, rng) {
   const topper = rng.weighted(KINDS[kind].toppers);
   const shapes = [rect(cx - hw, cx + hw, top - 0.4, top, { solid: true, core: true })];
-  if (topper !== 'none') shapes.push(rect(cx - hw * 0.8, cx + hw * 0.8, top, top + 1.0, {}));
+  if (topper !== 'none') shapes.push(rect(cx - hw * 0.8, cx + hw * 0.8, top, top + 1.0, { smash: true }));
   return { kind, mode: 'plat', x: cx, y: top, hw, topper, shapes };
 }
 function mkPass(kind, hx, hy, rng) {
@@ -166,9 +167,12 @@ function planSection(S, entry, K, isFinal, rng, pre) {
           own = { t: cur.t, pre: 0.1, post: 0.12 };
           ev = { type: 'hit', nx, ny };
         } else if (mode === 'plat') {
-          vout = { vx: vin.vx * 0.6 + rng.range(-1.5, 1.5), vy: Math.min(Math.max(0.38 * -vin.vy, 2), 7) };
+          // bounce off near the far edge of the little platform so the hop carries clear of it
+          let vx = vin.vx * 0.6 + rng.range(-1.5, 1.5);
+          if (Math.abs(vx) < 1.8) vx = (vx < 0 ? -1 : 1) * rng.range(1.8, 3.2);
+          vout = { vx, vy: Math.min(Math.max(0.45 * -vin.vy, 3.5), 8) };
           const hw = rng.range(1.0, 1.4);
-          obj = mkPlat(rng.weighted(platKinds), cur.x + rng.range(-0.4, 0.4) * hw, cur.y - R, hw, rng);
+          obj = mkPlat(rng.weighted(platKinds), cur.x - Math.sign(vx) * hw * rng.range(0.4, 0.8), cur.y - R, hw, rng);
           own = { t: cur.t, pre: 0.16, post: 0.16 };
           ev = { type: 'hit', nx: 0, ny: 1 };
         } else {
