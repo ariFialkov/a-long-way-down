@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#38a8ff" />
+    <meta name="description" content="A Long Way Down - one tap, one very long fall." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <title>A Long Way Down</title>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+    <div id="ui" class="s-menu">
+      <div id="pops"></div>
+      <header>
+        <div class="pill" id="bal"><small>BALANCE</small><b>$0.00</b></div>
+        <div class="pill demo">DEMO PLAY</div>
+        <button class="round" id="mute" aria-label="Toggle sound"></button>
+      </header>
+      <h1 id="title">A LONG WAY<span>DOWN</span></h1>
+      <div id="win"><small>WIN</small><b>$0.00</b></div>
+      <div id="depth"></div>
+      <div id="banner"></div>
+      <div id="prompt"></div>
+      <div id="result">
+        <h2></h2>
+        <div class="amt"></div>
+        <div class="mult"></div>
+        <p></p>
+      </div>
+      <footer id="bet">
+        <button class="round" id="betDown" aria-label="Lower bet">&minus;</button>
+        <div class="pill"><small>BET</small><b>$1.00</b></div>
+        <button class="round" id="betUp" aria-label="Raise bet">+</button>
+      </footer>
+      <div id="toast"></div>
+      <div id="fade"></div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
